@@ -1,6 +1,10 @@
 const std = @import("std");
 
-const FingerPrintArgs = struct { target: [:0]const u8 };
+pub const Command = union(enum) {
+    fingerprint: FingerPrintArgs,
+};
+
+pub const FingerPrintArgs = struct { target: [:0]const u8 };
 
 // TODO: fix this -- this is vibed. We can probably use an official regex. Good enough for now
 fn is_valid_ip(ip: [:0]const u8) bool {
@@ -16,7 +20,7 @@ fn is_valid_ip(ip: [:0]const u8) bool {
     return parts == 4;
 }
 
-fn fingerprint_dispatcher(flags: []const [:0]const u8) !void {
+fn fingerprint_parser(flags: []const [:0]const u8) !FingerPrintArgs {
     var target: ?[:0]const u8 = null;
 
     var i: usize = 0;
@@ -41,34 +45,27 @@ fn fingerprint_dispatcher(flags: []const [:0]const u8) !void {
         .target = target orelse return error.MissingTargetFlag,
     };
 
-    std.debug.print("fingerprint target: {s}\n", .{fingerprint_args.target});
+    return fingerprint_args;
 }
 
-pub fn parse_args(args: []const [:0]const u8) !void {
+pub fn parse_args(args: []const [:0]const u8) !Command {
     const command = args[1];
     const command_args = args[2..];
 
     if (args.len > 1) {
-        if (std.mem.eql(u8, command, "--help")) {
-            std.debug.print("usage: {s} [args...]\n", .{args[0]});
-            return;
-        } else if (std.mem.eql(u8, command, "fingerprint")) {
-            fingerprint_dispatcher(command_args) catch |err| {
+        if (std.mem.eql(u8, command, "fingerprint")) {
+            const fingerprint_args = fingerprint_parser(command_args) catch |err| {
                 switch (err) {
-
-                    // TODO: Better error messages
                     error.MissingTargetFlag => std.debug.print("missing target flag\n", .{}),
                     error.MissingTargetArgument => std.debug.print("missing target argument\n", .{}),
                     error.MissingTargetValue => std.debug.print("missing target value\n", .{}),
                     error.InvalidTargetValue => std.debug.print("invalid target value\n", .{}),
                     error.UnknownFingerprintFlag => std.debug.print("unknown fingerprint flag\n", .{}),
                 }
+                return err;
             };
-            return;
+            return Command{ .fingerprint = fingerprint_args };
         }
     }
-
-    for (args[1..]) |arg| {
-        std.log.info("arg: {s}", .{arg});
-    }
+    return error.UnknownCommand;
 }
