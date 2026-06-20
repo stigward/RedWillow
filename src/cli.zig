@@ -1,12 +1,14 @@
 const std = @import("std");
 
+// TODO: split when we add more commands
+const cmd = @import("commands/fingerprint.zig");
+
 pub const Command = union(enum) {
-    fingerprint: FingerPrintArgs,
+    fingerprint: cmd.FingerPrintArgs,
 };
 
-pub const FingerPrintArgs = struct { target: [:0]const u8 };
-
-// TODO: fix this -- this is vibed. We can probably use an official regex. Good enough for now
+// TODO: fix this -- this is vibed. We can probably use an official regex
+// Move to utils as well
 fn is_valid_ip(ip: [:0]const u8) bool {
     var ip_parts = std.mem.splitScalar(u8, ip, '.');
     var parts: usize = 0;
@@ -20,7 +22,7 @@ fn is_valid_ip(ip: [:0]const u8) bool {
     return parts == 4;
 }
 
-fn fingerprint_parser(flags: []const [:0]const u8) !FingerPrintArgs {
+fn fingerprint_parser(flags: []const [:0]const u8) !cmd.FingerPrintArgs {
     var target: ?[:0]const u8 = null;
 
     var i: usize = 0;
@@ -40,8 +42,8 @@ fn fingerprint_parser(flags: []const [:0]const u8) !FingerPrintArgs {
     }
 
     // We keep local target optional, but required for the fingerprint dispatcher
-    // Error handling here by assigning the optional to the struct or throwing
-    const fingerprint_args: FingerPrintArgs = .{
+    // Error if no target found
+    const fingerprint_args: cmd.FingerPrintArgs = .{
         .target = target orelse return error.MissingTargetFlag,
     };
 
@@ -55,6 +57,8 @@ pub fn parse_args(args: []const [:0]const u8) !Command {
     if (args.len > 1) {
         if (std.mem.eql(u8, command, "fingerprint")) {
             const fingerprint_args = fingerprint_parser(command_args) catch |err| {
+
+                // might be best to pull this out to it's own handler function
                 switch (err) {
                     error.MissingTargetFlag => std.debug.print("missing target flag\n", .{}),
                     error.MissingTargetArgument => std.debug.print("missing target argument\n", .{}),

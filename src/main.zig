@@ -1,5 +1,6 @@
 const std = @import("std");
 const cli = @import("cli.zig");
+const cmd = @import("commands/fingerprint.zig");
 
 pub fn main(init: std.process.Init) !void {
     const arena = init.arena.allocator();
@@ -11,6 +12,7 @@ pub fn main(init: std.process.Init) !void {
     switch (command) {
         .fingerprint => |flags| {
             std.debug.print("fingerprint target: {s}\n", .{flags.target});
+            cmd.fingerprint_runner(flags);
         },
     }
 }
