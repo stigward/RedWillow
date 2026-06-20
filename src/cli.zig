@@ -1,6 +1,5 @@
 const std = @import("std");
 
-// TODO: split when we add more commands
 const fingerprint = @import("commands/fingerprint.zig");
 
 pub const Command = union(enum) {
