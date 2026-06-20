@@ -1,10 +1,10 @@
 const std = @import("std");
 
 // TODO: split when we add more commands
-const cmd = @import("commands/fingerprint.zig");
+const fingerprint = @import("commands/fingerprint.zig");
 
 pub const Command = union(enum) {
-    fingerprint: cmd.FingerPrintArgs,
+    fingerprint: fingerprint.FingerPrintArgs,
 };
 
 // TODO: fix this -- this is vibed. We can probably use an official regex
@@ -22,7 +22,7 @@ fn is_valid_ip(ip: [:0]const u8) bool {
     return parts == 4;
 }
 
-fn fingerprint_parser(flags: []const [:0]const u8) !cmd.FingerPrintArgs {
+fn fingerprint_parser(flags: []const [:0]const u8) !fingerprint.FingerPrintArgs {
     var target: ?[:0]const u8 = null;
 
     var i: usize = 0;
@@ -43,7 +43,7 @@ fn fingerprint_parser(flags: []const [:0]const u8) !cmd.FingerPrintArgs {
 
     // We keep local target optional, but required for the fingerprint dispatcher
     // Error if no target found
-    const fingerprint_args: cmd.FingerPrintArgs = .{
+    const fingerprint_args: fingerprint.FingerPrintArgs = .{
         .target = target orelse return error.MissingTargetFlag,
     };
 
